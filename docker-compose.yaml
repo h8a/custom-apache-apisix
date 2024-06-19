@@ -1,0 +1,35 @@
+services:
+  etcd:
+    image: bitnami/etcd:3.4.9
+    user: root
+    restart: always
+    volumes:
+      - ./docker/etcd_data:/etcd_data
+    environment:
+      ETCD_DATA_DIR: /etcd_data
+      ETCD_ENABLE_V2: "true"
+      ALLOW_NONE_AUTHENTICATION: "no"
+      ETCD_ADVERTISE_CLIENT_URLS: "http://etcd:2379"
+      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+    ports:
+      - "2379:2379/tcp"
+    networks:
+      - apisix
+
+  apisix-dashboard:
+    image: apache/apisix-dashboard:3.0.1-alpine
+    restart: always
+    environment:
+      - ENABLE_PROXY=false
+    ports:
+      - 9000:9000
+    volumes:
+      - ./docker/apisix/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+    networks:
+      - apisix
+    depends_on:
+      - etcd
+
+networks:
+  apisix:
+    driver: bridge
