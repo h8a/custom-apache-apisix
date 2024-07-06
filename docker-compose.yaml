@@ -13,7 +13,15 @@ services:
       ETCD_ADVERTISE_CLIENT_URLS: "http://etcd:2379"
       ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
     healthcheck:
-      test: ["CMD-SHELL", "etcdctl", "endpoint", "health", "--cluster=false"]
+      test:
+        [
+          "CMD-SHELL",
+          "etcdctl",
+          "endpoint",
+          "health",
+          "root:wCeG;{X6@.]HBl7Cf",
+          "--cluster=false",
+        ]
       interval: 10s
       timeout: 10s
       retries: 3
@@ -27,12 +35,14 @@ services:
     restart: always
     environment:
       DOMAIN_NAME: $DOMAIN_NAME
+      ETCD_ROOT_PASSWORD: $ETCD_ROOT_PASSWORD
+      ADMIN_KEY: $ADMIN_KEY
     ports:
       - "9080:9080"
       - "9443:9443"
     volumes:
       - ./docker/apisix/config.yaml:/usr/local/apisix/conf/config.yaml
-      - ./docker/nginx/certbot/conf:/etc/letsencrypt
+      - /etc/letsencrypt:/etc/letsencrypt
     networks:
       - apisix
     depends_on:
@@ -48,40 +58,14 @@ services:
     ports:
       - 9000:9000
     volumes:
-      - ./docker/apisix/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+      - ./docker/apisix-dashboard/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
     networks:
       - apisix
     depends_on:
       etcd:
         condition: service_healthy
-
-  nginx:
-    image: nginx:latest
-    restart: always
-    volumes:
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-      - ./docker/nginx/certbot/conf:/etc/letsencrypt
-      - ./docker/nginx/certbot/www:/var/www/certbot
-    entrypoint: /entrypoint.sh
-    environment:
-      DOMAIN_NAME: $DOMAIN_NAME
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - apisix
-      - apisix-dashboard
-    networks:
-      - apisix
-
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - ./docker/nginx/certbot/conf:/etc/letsencrypt
-      - ./docker/nginx/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-    networks:
-      - apisix
+      apisix:
+        condition: service_started
 
 networks:
   apisix:
