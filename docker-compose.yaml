@@ -19,7 +19,7 @@ services:
           "etcdctl",
           "endpoint",
           "health",
-          "root:wCeG;{X6@.]HBl7Cf",
+          "root:$ETCD_ROOT_PASSWORD",
           "--cluster=false",
         ]
       interval: 10s
